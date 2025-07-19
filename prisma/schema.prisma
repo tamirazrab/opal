@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  studio Media? 
+  workspaces Workspace[]
+  videos Video[]
+  subscriptions Subscription[]
+  members Member[]
+  notifications Notification[]
+  sender Invite[] @relation("sender")
+  receiver Invite[] @relation("receiver")
+  firstName String?
+  lastName  String?
+  image  String?
+  trial Boolean @default(false)
+  clerk_id   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PRESET {
+  HD
+  SD
+}
+
+enum TYPE {
+  PERSONAL
+  PUBLIC
+}
+
+enum SUBSCRIPTION_PLAN {
+  FREE
+  PRO
+}
+
+model Subscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+  User User @relation(fields: [user_id], references: [id])
+  plan  SUBSCRIPTION_PLAN @default(FREE)
+  customerId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Video {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+  User User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  title String @default("Untitled Video")
+  description String? @default("No description")
+  source String? @unique
+  folder_id String? @db.Uuid
+  folder Folder? @relation(fields: [folder_id], references: [id], onDelete: Cascade)
+  processing Boolean @default(true)
+  workspace_id String @db.Uuid
+  Workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  views Int @default(0)
+  summary String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Folder {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name String @default("Untitled Folder")
+  videos Video[]
+  workspace_id String @db.Uuid
+  Workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Media {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  screen String?
+  mic String?
+  camera String?
+  preset PRESET @default(SD)
+  user_id String @unique @db.Uuid
+  User User @relation(fields: [user_id], references: [id])
+}
+
+model Member {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+  User User @relation(fields: [user_id], references: [id])
+  workspace_id String @db.Uuid
+  Workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  member Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+  User User @relation(fields: [user_id], references: [id])
+  content String
+}
+
+model Workspace {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name String
+  type TYPE @default(PERSONAL)
+  user_id String @db.Uuid
+  User User @relation(fields: [user_id], references: [id])
+  folders Folder[]
+  videos Video[]
+  members Member[]
+  invites Invite[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invite {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sender_id String @db.Uuid
+  sender User @relation("sender", fields: [sender_id], references: [id])
+  receiver_id String @db.Uuid
+  receiver User @relation("receiver", fields: [receiver_id], references: [id])
+  workspace_id String @db.Uuid
+  Workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  accepted Boolean @default(false)
+  content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
