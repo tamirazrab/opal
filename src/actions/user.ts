@@ -82,14 +82,6 @@ export const onAuthenticateUser = async () => {
   }
 };
 
-export const getUser = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      clerk_id: userId,
-    },
-  });
-};
-
 export const getNotifications = async () => {
   try {
     const user = await currentUser();
@@ -136,6 +128,65 @@ export const getNotifications = async () => {
       success: false,
       message: "Failed to get notifications",
       data: { notifications: [] },
+    };
+  }
+};
+
+export const searchUserInWorkspace = async (query: string) => {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return {
+        status: 403,
+        success: false,
+        message: "User not found",
+      };
+    }
+
+    const workspaces = await prisma.user.findMany({
+      where: {
+        OR: [
+          { firstname: { contains: query, mode: "insensitive" } },
+          { lastname: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+        ],
+        NOT: [{ clerk_id: user.id }],
+      },
+      select: {
+        id: true,
+        subscriptions: {
+          select: {
+            plan: true,
+          }
+        },
+        firstname: true,
+        lastname: true,
+        email: true,
+        image: true,
+      }
+    });
+
+    if (!workspaces || !workspaces.length) {
+      return {
+        status: 404,
+        success: false,
+        message: "No workspaces found",
+        data: { workspaces: null },
+      };
+    }
+
+    return {
+      status: 200,
+      success: true,
+      data: { workspaces },
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      status: 500,
+      success: false,
+      message: "Failed to search workspace",
+      data: { workspaces: null },
     };
   }
 };

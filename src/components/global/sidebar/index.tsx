@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { getWorkspaces } from "@/actions/workspace";
 import { useUserQueryData } from "@/hooks/user-query-data";
 import { GetWorkspacesResponse } from "@/types/index.types";
+import Modal from "../modal";
+import { PlusCircle } from "lucide-react";
 
 type Props = {
   activeWorkspaceId: string;
@@ -17,10 +19,10 @@ const Sidebar = ({ activeWorkspaceId }: Props) => {
   const router = useRouter()
 
   // TODO: fix types clutter here
-  const {data, isFetched} = useUserQueryData(['user-workspaces'], getWorkspaces) 
+  const { data, isFetched } = useUserQueryData(['user-workspaces'], getWorkspaces)
   console.log("🚀 ~ Sidebar ~ data:", data)
 
-  const  workspaces = (data as GetWorkspacesResponse)?.data?.workspaces || null
+  const workspaces = (data as GetWorkspacesResponse)?.data?.workspaces || null
   console.log("🚀 ~ Sidebar ~ workspaces:", workspaces)
 
   const onChangeActiveWorkspace = (workspaceId: string) => {
@@ -56,6 +58,13 @@ const Sidebar = ({ activeWorkspaceId }: Props) => {
           </SelectGroup>
         </SelectContent>
       </Select>
+
+      <Modal trigger={
+        <span className="text-sm cursor-pointer flex items-center justify-center bg-neutral-800/90 hover:bg-neutral-800/60 w-full rounded-sm p-[5px] gap-2">
+          <PlusCircle size={16} className="text-neutral-800/90 fill-neutral-500" />
+          <span className="text-neutral-400 font-semibold text-xs">Invite To Workspace</span> Workspace</span>} title="Invite To Workspace" description="Invite others to your workspace">
+          <div className="flex flex-col gap-2"></div>
+          </Modal>
     </div>
   )
 }
