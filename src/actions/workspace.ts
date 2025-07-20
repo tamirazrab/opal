@@ -2,8 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
+import {
+  VerifyAccessToWorkspaceResponse,
+  GetWorkspaceFoldersResponse,
+  GetUserVideosResponse,
+  GetWorkspacesResponse,
+  Workspace
+} from "@/types/index.types";
 
-export const verifyAccessToWorkspace = async (workspaceId: string) => {
+export const verifyAccessToWorkspace = async (workspaceId: string): Promise<VerifyAccessToWorkspaceResponse> => {
   try {
     const user = await currentUser();
     if (!user) {
@@ -14,7 +21,7 @@ export const verifyAccessToWorkspace = async (workspaceId: string) => {
       };
     }
 
-    const isUserInWorkspace = await prisma.workSpace.findUnique({
+    const isUserInWorkspace = await prisma.workspace.findUnique({
       where: {
         id: workspaceId,
         OR: [
@@ -36,44 +43,38 @@ export const verifyAccessToWorkspace = async (workspaceId: string) => {
       },
     });
 
-    return isUserInWorkspace ? { status: 200, success: true, data:{ workspace: isUserInWorkspace } } : { status: 403, success: false, data: { workspace: null}};
+    return isUserInWorkspace ? { status: 200, success: true, data: { workspace: isUserInWorkspace as Workspace } } : { status: 403, success: false, message: "Access denied" };
 
   } catch (error) {
     console.error(error);
     return {
       status: 500,
       success: false,
-      message: "Internal server error",
-      data: {
-        workspace: null
-      }
+      message: "Internal server error"
     };
   }
 };
 
-export const getWorkspaceFolders = async (workspaceId: string) => {
+export const getWorkspaceFolders = async (workspaceId: string): Promise<GetWorkspaceFoldersResponse> => {
   try {
     const folders = await prisma.folder.findMany({
       where: {
-        workspaceId: workspaceId,
+        workspace_id: workspaceId,
       },
       include: {
         _count: {
           select: {
-            video: true
+            videos: true
           }
         }
       }
     });
 
-    if (!folders && !folders.length) {
+    if (!folders || folders.length === 0) {
       return {
         status: 404,
         success: false,
-        message: "No folders found",
-        data: {
-          folders: []
-        }
+        message: "No folders found"
       }
     }
 
@@ -90,19 +91,16 @@ export const getWorkspaceFolders = async (workspaceId: string) => {
     return {
       status: 500,
       success: false,
-      message: "Internal server error",
-      data: {
-        folders: []
-      }
+      message: "Internal server error"
     }
   }
 };
 
-export const getUserVideos = async (workspaceId: string) => {
+export const getUserVideos = async (workspaceId: string): Promise<GetUserVideosResponse> => {
   try {
     const videos = await prisma.video.findMany({
       where: {
-        OR: [ { workspace_id: workspaceId}, { folder_id: workspaceId  } ]
+        OR: [{ workspace_id: workspaceId }, { folder_id: workspaceId }]
       },
       select: {
         id: true,
@@ -129,11 +127,11 @@ export const getUserVideos = async (workspaceId: string) => {
       },
     });
 
-    if(!videos && !videos.length) {
+    if (!videos || videos.length === 0) {
       return {
         status: 404,
         success: false,
-        message: "No videos found",
+        message: "No videos found"
       }
     }
 
@@ -145,19 +143,18 @@ export const getUserVideos = async (workspaceId: string) => {
         videos
       }
     }
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     return {
       status: 500,
       success: false,
-      message: "Internal server error",
-      data: {
-        videos: []
-      }
+      message: "Internal server error"
     }
   }
 }
 
+// TODO: fix type errors later
+// export const getWorkspaces = async (): Promise<GetWorkspacesResponse> => {
 export const getWorkspaces = async () => {
   try {
     const user = await currentUser();
@@ -174,16 +171,16 @@ export const getWorkspaces = async () => {
         clerk_id: user.id,
       },
       select: {
-        subscription: {
+        subscriptions: {
           select: {
             plan: true
           }
         },
-        workspace: {
+        workspaces: {
           select: {
             id: true,
             name: true,
-            image: true,
+            type: true,
           }
         },
         members: {
@@ -200,11 +197,11 @@ export const getWorkspaces = async () => {
       }
     })
 
-    if(!workspaces && !workspaces.length) {
+    if (!workspaces) {
       return {
         status: 404,
         success: false,
-        message: "No workspaces found",
+        message: "No workspaces found"
       }
     }
 
@@ -216,15 +213,12 @@ export const getWorkspaces = async () => {
         workspaces
       }
     }
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     return {
       status: 500,
       success: false,
-      message: "Internal server error",
-      data: {
-        workspaces: []
-      }
+      message: "Internal server error"
     }
   }
 }

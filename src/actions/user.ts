@@ -19,7 +19,7 @@ export const onAuthenticateUser = async () => {
         clerk_id: user.id,
       },
       include: {
-        workspace: {
+        workspaces: {
           where: {
             User: {
               clerk_id: user.id,
@@ -39,24 +39,24 @@ export const onAuthenticateUser = async () => {
       data: {
         clerk_id: user.id,
         email: user.emailAddresses[0].emailAddress,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstname: user.firstName,
+        lastname: user.lastName,
         image: user.imageUrl,
         studio: {
           create: {}
         },
-        susbcription: {
+        subscriptions: {
           create: {}
         },
-        workspace: {
+        workspaces: {
           create: {
             name: `${user.firstName}'s Workspace`
           }
         }
       },
       include: {
-        workspace: true,
-        susbcription: true,
+        workspaces: true,
+        subscriptions: true,
       },
     });
 
@@ -115,7 +115,7 @@ export const getNotifications = async () => {
       },
     });
 
-    if(!notifications && !notifications?.notifications.length) {
+    if (!notifications && !notifications?.notifications.length) {
       return {
         status: 404,
         success: false,

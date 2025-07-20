@@ -25,8 +25,8 @@ model User {
   notifications Notification[]
   sender Invite[] @relation("sender")
   receiver Invite[] @relation("receiver")
-  firstName String?
-  lastName  String?
+  firstname String?
+  lastname  String?
   image  String?
   trial Boolean @default(false)
   clerk_id   String   @unique
@@ -67,7 +67,7 @@ model Video {
   description String? @default("No description")
   source String? @unique
   folder_id String? @db.Uuid
-  folder Folder? @relation(fields: [folder_id], references: [id], onDelete: Cascade)
+  Folder Folder? @relation(fields: [folder_id], references: [id], onDelete: Cascade)
   processing Boolean @default(true)
   workspace_id String @db.Uuid
   Workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)

@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/themes";
+import ReactQueryProvider from "./react-query";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -21,17 +22,19 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${manrope.variable} antialiased bg-[#171717]`}
-        >
+          suppressHydrationWarning>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <ReactQueryProvider>
+              {children}
+            </ReactQueryProvider>
           </ThemeProvider>
         </body>
       </html>
